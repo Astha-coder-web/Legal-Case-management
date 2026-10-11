@@ -1,11 +1,34 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from './Auth/useAuth.js'
 import Login from './Components/Login.jsx'
 import Signup from './Components/Signup.jsx'
+import ThemeToggle from './Components/ThemeToggle.jsx'
+import Dashboard from './Components/Dashboard/Dashboard.jsx'
 import './App.css'
 
 function App() {
-  const { page, user, error, busy, isCheckingSession, logout } = useAuth()
+  const { page, isCheckingSession } = useAuth()
+  const [theme, setTheme] = useState(() => {
+    try {
+      return window.localStorage.getItem('legalsmart-theme') === 'dark' ? 'dark' : 'light'
+    } catch {
+      return 'light'
+    }
+  })
+
+  function toggleTheme() {
+    setTheme((currentTheme) => currentTheme === 'dark' ? 'light' : 'dark')
+  }
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    document.documentElement.style.colorScheme = theme
+    try {
+      window.localStorage.setItem('legalsmart-theme', theme)
+    } catch {
+      // The selected theme still applies for this session when storage is unavailable.
+    }
+  }, [theme])
 
   useEffect(() => {
     document.title = page === 'dashboard'
@@ -20,35 +43,7 @@ function App() {
   }
 
   if (page === 'dashboard') {
-    return (
-      <main className="dashboard">
-        <header className="dashboard-header">
-          <a className="brand" href="#dashboard" aria-label="LegalSmart home">
-            <span className="brand-mark" aria-hidden="true">L</span>
-            <span>Legal<span className="brand-light">Smart</span></span>
-          </a>
-          <button className="text-button dashboard-logout" onClick={logout} disabled={busy}>
-            {busy ? 'Signing out…' : 'Sign out'}
-          </button>
-        </header>
-        <section className="dashboard-content" id="dashboard">
-          <span className="eyebrow">YOUR LEGAL WORKSPACE</span>
-          <h1>Good to see you, {user?.name || 'there'}.</h1>
-          <p className="dashboard-intro">
-            Your cases, documents, and next steps will have a home here.
-          </p>
-          {error && <p className="form-error" role="alert">{error}</p>}
-          <div className="dashboard-card">
-            <span className="dashboard-card-icon" aria-hidden="true">✦</span>
-            <div>
-              <h2>Your workspace is ready</h2>
-              <p>You’re signed in as {user?.email}. Connect your case data to get started.</p>
-            </div>
-          </div>
-        </section>
-        <footer className="dashboard-footer">A clearer way forward. <span>© 2025 LegalSmart</span></footer>
-      </main>
-    )
+    return <Dashboard onToggleTheme={toggleTheme} theme={theme} />
   }
 
   return (
@@ -78,6 +73,7 @@ function App() {
         <div className="auth-panel-top">
           <span>WELCOME TO LEGALSMART</span>
           <span className="panel-dot" aria-hidden="true"></span>
+          <ThemeToggle onToggle={toggleTheme} theme={theme} />
         </div>
         {page === 'signup' ? <Signup /> : <Login />}
         <footer className="auth-footer">

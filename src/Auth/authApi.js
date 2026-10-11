@@ -2,13 +2,14 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
 
 export async function authRequest(path, options = {}) {
   let response
+  const isFormData = options.body instanceof FormData
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
       credentials: 'include',
-      signal: options.signal || AbortSignal.timeout(15000),
+      signal: options.signal || (!isFormData && AbortSignal.timeout(15000)),
       headers: {
-        'Content-Type': 'application/json',
+        ...(!isFormData && { 'Content-Type': 'application/json' }),
         ...options.headers,
       },
     })
